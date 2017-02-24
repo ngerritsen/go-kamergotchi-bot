@@ -1,14 +1,30 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
 const apiURL = "https://api.kamergotchi.nl/game"
 
-// APIRequest does an api request to kamergotchi
-func APIRequest(playerToken string) ([]byte, error) {
+// GetGameInfo gets the current state of the game
+func GetGameInfo(playerToken string) Game {
+	res, err := apiRequest(playerToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var info map[string]Game
+	if err := json.Unmarshal(res, &info); err != nil {
+		log.Fatal(err)
+	}
+
+	return info["game"]
+}
+
+func apiRequest(playerToken string) ([]byte, error) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {

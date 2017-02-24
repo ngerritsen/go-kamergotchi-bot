@@ -1,30 +1,21 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 )
 
 func main() {
 	log.Println("Go Kamergotchi bot started.")
-
-	playerToken := os.Args[1]
-
-	game := getGameInfo(playerToken)
-	log.Println(game.Gotchi.getInfo())
+	playerToken := getPlayerToken()
+	game := GetGameInfo(playerToken)
+	log.Println("Retrieved player info for kamergotchi " + game.Gotchi.getInfo() + ".")
 }
 
-func getGameInfo(playerToken string) Game {
-	res, err := APIRequest(playerToken)
-	if err != nil {
-		log.Fatal(err)
+func getPlayerToken() string {
+	if len(os.Args) < 2 {
+		log.Fatal("Player token not provided, please provide the token as command line argument.")
 	}
 
-	var info map[string]Game
-	if err := json.Unmarshal(res, &info); err != nil {
-		log.Fatal(err)
-	}
-
-	return info["game"]
+	return os.Args[1]
 }

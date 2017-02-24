@@ -7,34 +7,30 @@ import (
 
 const apiURL = "https://api.kamergotchi.nl/game"
 
-// ApiRequest does an api request to kamergotchi
-func ApiRequest(playerToken string) (string, error) {
+// APIRequest does an api request to kamergotchi
+func APIRequest(playerToken string) ([]byte, error) {
 	client := http.Client{}
 	req, err := http.NewRequest("GET", apiURL, nil)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.Header.Add("x-player-token", playerToken)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	res, err := client.Do(req)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
-		return "", err
+		return body, err
 	}
 
-	return string(body), nil
+	return body, nil
 }

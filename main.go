@@ -7,14 +7,21 @@ import (
 
 func main() {
 	log.Println("Go Kamergotchi bot started.")
+
 	playerToken := getPlayerToken()
-	game := GetGameInfo(playerToken)
+	api := &GameAPI{playerToken}
+	errChan := make(chan error)
+	game, err := api.GetGameInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Println("Retrieved player info for kamergotchi " + game.Gotchi.getInfo() + ".")
 
-	go ClaimLoop(game, playerToken)
-	go CareLoop(game, playerToken)
+	go ClaimLoop(game, api, errChan)
+	go CareLoop(game, api, errChan)
 
-	select {} // Prevent program from exiting
+	log.Fatal(<-errChan)
 }
 
 func getPlayerToken() string {

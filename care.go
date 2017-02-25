@@ -7,23 +7,34 @@ import (
 )
 
 // CareLoop recusively keeps caring for the gotchi
-func CareLoop(game Game, playerToken string) {
+func CareLoop(game Game, api *GameAPI, errChan chan<- error) {
 	if game.CareLeft == 0 {
 		reset, err := time.Parse(time.RFC3339, game.CareReset)
 		if err != nil {
-			log.Fatal(err)
+			errChan <- err
+			return
 		}
 
-		duration := GetCareWaitDuration(reset)
+		duration := calcCareWaitDuration(reset)
 		log.Println("Cannot spend any more care, waiting for " + duration.String() + "...")
 		time.Sleep(duration)
-		game = GetGameInfo(playerToken)
+
+		game, err = api.GetGameInfo()
+		if err != nil {
+			errChan <- err
+			return
+		}
 	}
 
 	careTypeToGive := determineCareTypeToGive(game.Stats)
-	game = SpendCare(careTypeToGive, playerToken)
+	game, err := api.SpendCare(careTypeToGive)
+	if err != nil {
+		errChan <- err
+		return
+	}
+
 	log.Println("Spent care on " + careTypeToGive + " new score: " + strconv.Itoa(game.Score) + ".")
-	CareLoop(game, playerToken)
+	CareLoop(game, api, errChan)
 }
 
 func determineCareTypeToGive(stats map[string]int) string {
@@ -38,4 +49,9 @@ func determineCareTypeToGive(stats map[string]int) string {
 	}
 
 	return careTypeToGive
+}
+
+func calcCareWaitDuration(reset time.Time) time.Duration {
+	timeToWait := reset.Sub(time.Now())
+	return timeToWait + randomSeconds(60)
 }

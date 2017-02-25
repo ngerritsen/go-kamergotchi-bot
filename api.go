@@ -4,52 +4,56 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
 const apiURL = "https://api.kamergotchi.nl/game"
 
+// GameAPI does the network communcation to the kamergotchi API
+type GameAPI struct {
+	playerToken string
+}
+
 // GetGameInfo gets the current state of the game
-func GetGameInfo(playerToken string) Game {
-	res, err := apiRequest("/", "GET", playerToken, nil)
+func (api *GameAPI) GetGameInfo() (Game, error) {
+	res, err := apiRequest("/", "GET", api.playerToken, nil)
 	if err != nil {
-		log.Fatal(err)
+		return Game{}, err
 	}
 
 	return parseGame(res)
 }
 
 // SpendCare spends care on the kamergotchi
-func SpendCare(careType string, playerToken string) Game {
+func (api *GameAPI) SpendCare(careType string) (Game, error) {
 	body, _ := json.Marshal(map[string]string{"bar": careType})
-	res, err := apiRequest("/care", "POST", playerToken, body)
+	res, err := apiRequest("/care", "POST", api.playerToken, body)
 
 	if err != nil {
-		log.Fatal(err)
+		return Game{}, err
 	}
 
 	return parseGame(res)
 }
 
 // ClaimReward claims a reward
-func ClaimReward(playerToken string) Game {
-	res, err := apiRequest("/claim", "POST", playerToken, nil)
+func (api *GameAPI) ClaimReward() (Game, error) {
+	res, err := apiRequest("/claim", "POST", api.playerToken, nil)
 
 	if err != nil {
-		log.Fatal(err)
+		return Game{}, err
 	}
 
 	return parseGame(res)
 }
 
-func parseGame(res []byte) Game {
+func parseGame(res []byte) (Game, error) {
 	var info map[string]Game
 	if err := json.Unmarshal(res, &info); err != nil {
-		log.Fatal(err)
+		return Game{}, err
 	}
 
-	return info["game"]
+	return info["game"], nil
 }
 
 func apiRequest(path string, method string, playerToken string, body []byte) ([]byte, error) {

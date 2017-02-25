@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -10,18 +11,24 @@ func main() {
 
 	playerToken := getPlayerToken()
 	api := &GameAPI{playerToken}
-	errChan := make(chan error)
 	game, err := api.GetGameInfo()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Retrieved player info for kamergotchi " + game.Gotchi.getInfo() + ".")
+	logInfo(game)
 
-	go ClaimLoop(game, api, errChan)
-	go CareLoop(game, api, errChan)
+	go ClaimLoop(game, api)
+	go CareLoop(game, api)
 
-	log.Fatal(<-errChan)
+	select {} // Prevent application from exiting
+}
+
+func logInfo(game Game) {
+	score := strconv.Itoa(game.Score)
+	msg := "Retrieved player info for kamergotchi " + game.Gotchi.getInfo() + ", current score: " + score + "."
+
+	log.Println(msg)
 }
 
 func getPlayerToken() string {

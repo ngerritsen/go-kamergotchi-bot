@@ -7,11 +7,11 @@ import (
 )
 
 // CareLoop recusively keeps caring for the gotchi
-func CareLoop(game Game, api *GameAPI, errChan chan<- error) {
+func CareLoop(game Game, api *GameAPI) {
 	if game.CareLeft == 0 {
 		reset, err := time.Parse(time.RFC3339, game.CareReset)
 		if err != nil {
-			errChan <- err
+			handleCareError(api, err)
 			return
 		}
 
@@ -21,7 +21,7 @@ func CareLoop(game Game, api *GameAPI, errChan chan<- error) {
 
 		game, err = api.GetGameInfo()
 		if err != nil {
-			errChan <- err
+			handleCareError(api, err)
 			return
 		}
 	}
@@ -29,12 +29,12 @@ func CareLoop(game Game, api *GameAPI, errChan chan<- error) {
 	careTypeToGive := determineCareTypeToGive(game.Stats)
 	game, err := api.SpendCare(careTypeToGive)
 	if err != nil {
-		errChan <- err
+		handleCareError(api, err)
 		return
 	}
 
 	log.Println("Spent care on " + careTypeToGive + " new score: " + strconv.Itoa(game.Score) + ".")
-	CareLoop(game, api, errChan)
+	CareLoop(game, api)
 }
 
 func determineCareTypeToGive(stats map[string]int) string {
@@ -54,4 +54,16 @@ func determineCareTypeToGive(stats map[string]int) string {
 func calcCareWaitDuration(reset time.Time) time.Duration {
 	timeToWait := reset.Sub(time.Now())
 	return timeToWait + randomSeconds(60)
+}
+
+func handleCareError(api *GameAPI, err error) {
+	log.Println("Error in care loop occurred, restarting in 15 seconds: " + err.Error())
+	time.Sleep(15 * time.Second)
+
+	game, err := api.GetGameInfo()
+	if err != nil {
+		handleCareError(api, err)
+	}
+
+	CareLoop(game, api)
 }

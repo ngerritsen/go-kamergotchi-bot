@@ -33,7 +33,7 @@ func ClaimLoop(game Game, api *GameAPI) {
 
 func calcClaimWaitDuration(resetTime time.Time) time.Duration {
 	timeToWait := resetTime.Sub(time.Now())
-	return timeToWait + 80*time.Second + randomSeconds(60)
+	return timeToWait + 5*time.Second + randomSeconds(3)
 }
 
 func handleClaimError(api *GameAPI, err error) {

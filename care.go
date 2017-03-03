@@ -53,12 +53,12 @@ func determineCareTypeToGive(stats map[string]int) string {
 
 func calcCareWaitDuration(reset time.Time) time.Duration {
 	timeToWait := reset.Sub(time.Now())
-	return timeToWait + randomSeconds(60)
+	return timeToWait + randomSeconds(3)
 }
 
 func handleCareError(api *GameAPI, err error) {
 	log.Println("Error in care loop occurred, restarting in 15 seconds: " + err.Error())
-	time.Sleep(15 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	game, err := api.GetGameInfo()
 	if err != nil {
